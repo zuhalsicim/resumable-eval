@@ -172,6 +172,9 @@ async def crash_test(
     )
 
 
-async def local_server() -> WorkflowEnvironment:
+UI_PORT = 8233
+
+
+async def local_server(ui: bool = False) -> WorkflowEnvironment:
     """A Temporal dev server on this machine. The SDK downloads it the first time."""
-    return await WorkflowEnvironment.start_local(dev_server_log_level="error")
+    return await WorkflowEnvironment.start_local(dev_server_log_level="error", ui=ui, ui_port=UI_PORT if ui else None)

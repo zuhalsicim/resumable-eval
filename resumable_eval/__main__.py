@@ -22,8 +22,16 @@ def config(args: argparse.Namespace, run_id: str) -> RunConfig:
 
 async def run(args: argparse.Namespace) -> int:
     cfg = config(args, harness.new_run_id("run"))
-    async with await harness.local_server() as env:
+    async with await harness.local_server(ui=args.ui) as env:
         report = await harness.run_once(env.client, cfg, args.db, crash_after=args.crash_after)
+        show(cfg, report, args.db)
+        if args.ui:
+            print(f"web UI: http://localhost:{harness.UI_PORT}/namespaces/default/workflows/{cfg.run_id}")
+            await asyncio.to_thread(input, "press Enter to stop the server ")
+    return 0
+
+
+def show(cfg: RunConfig, report: harness.Report, db: Path) -> None:
     s = report.summary
     faults = harness.planned_faults(cfg, s.answered)
     print(f"{s.run_id}: {s.status}")
@@ -35,9 +43,8 @@ async def run(args: argparse.Namespace) -> int:
     )
     if report.crashed_after is not None:
         print(f"worker killed after {report.crashed_after} results, a new worker took over")
-    print(f"provider answers in ledger: {len(report.calls)}, result rows: {len(report.results)} (in {args.db})")
+    print(f"provider answers in ledger: {len(report.calls)}, result rows: {len(report.results)} (in {db})")
     print(f"history events: {report.events}, seconds: {report.seconds:.1f}")
-    return 0
 
 
 async def crash_test(args: argparse.Namespace) -> int:
@@ -60,6 +67,8 @@ def main() -> int:
         p.add_argument("--flaky-rate", type=float, default=Faults.flaky_rate)
         p.add_argument("--crash-after", type=int, default=None if name == "run" else 80)
         p.add_argument("--db", type=Path, default=Path("runs/results.db"))
+        if name == "run":
+            p.add_argument("--ui", action="store_true", help="start the Temporal web UI and keep the server open")
     w = commands.add_parser("worker")
     w.add_argument("--address", required=True)
     w.add_argument("--queue", required=True)
