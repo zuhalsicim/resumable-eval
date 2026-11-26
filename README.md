@@ -44,7 +44,10 @@ Numbers from CI run [45824885832](https://github.com/zuhalsicim/resumable-eval/a
 On all 1,034 questions the seed plans 20 dead and 87 flaky questions for the primary, with 187 errors and 28 hangs.
 The run answers 20 questions with the fallback, gets 616 of 1,034 right (the primary alone: 614) and spends $0.5492 (`python -m resumable_eval run --questions 1034 --crash-after 400`).
 
-A second test makes the worker die at the worst moment: right after the provider answered question 4, before the worker could report the answer.
+Where the kill lands is chance.
+In the next CI run ([45826694170](https://github.com/zuhalsicim/resumable-eval/actions/runs/45826694170)) it landed on all 1,034 questions after a provider had answered and before the worker had reported the answer: the ledger had 1,035 answers, one question was answered twice, and the run still counted every question once and ended identical to the uninterrupted run.
+
+A second test makes the worker die at that worst moment on purpose: right after the provider answered question 4, before the worker could report the answer.
 Temporal never received it, so after the 1-second timeout it ran the call again on the new worker.
 The ledger shows 11 provider answers for 10 questions, while the results and the spend count question 4 once.
 Temporal runs an activity at least once, not exactly once, and that is why the writes are idempotent.
