@@ -14,7 +14,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -27,7 +27,17 @@ jobs:
         run: |
           ruff check .
           ruff format --check .
-      - name: Test (unit tests and the crash test on 200 questions)
+      - name: Download the Temporal CLI 1.10.1 (the version the SDK uses), for the server crash tests
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/temporal.tar.gz" \
+            https://github.com/temporalio/cli/releases/download/v1.10.1/temporal_cli_1.10.1_linux_amd64.tar.gz
+          echo "4c1500e2ce2d4de136e5fe8852d9b7f82eb62f19b6b383b3e0c040519a9d20b1  $RUNNER_TEMP/temporal.tar.gz" | sha256sum -c
+          tar -xzf "$RUNNER_TEMP/temporal.tar.gz" -C "$RUNNER_TEMP" temporal
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/temporal" --version
+      - name: Test (unit tests, the crash tests on up to 200 questions, the server crash test on 60)
         run: pytest -v -s
       - name: Crash test on all 1,034 questions, worker killed after 400 results
         run: python -m resumable_eval crash-test --questions 1034 --crash-after 400
+      - name: Server crash test on 200 questions, Temporal server killed after 80 results
+        run: python -m resumable_eval server-crash-test --questions 200 --crash-after 80
