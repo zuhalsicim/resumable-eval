@@ -1,7 +1,7 @@
 [project]
 name = "resumable-eval"
-version = "1.0.0"
-description = "An LLM benchmark run as a Temporal workflow: retries, a fallback provider, a budget, and a resume after the worker is killed."
+version = "1.1.0"
+description = "An LLM benchmark run as a Temporal workflow: retries, a fallback provider, a budget that is never overspent, and a resume after the worker or the server is killed."
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Zuhal Karadavut" }]

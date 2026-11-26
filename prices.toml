@@ -1,0 +1,11 @@
+# Prices in dollars per million tokens, one table per provider.
+# They are illustrative: made up for this project, not anyone's price list.
+# The small primary is cheap; the fallback costs five times as much.
+
+[q4_k_m]
+input = 1.00
+output = 4.00
+
+[f16]
+input = 5.00
+output = 20.00
