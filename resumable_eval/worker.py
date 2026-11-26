@@ -1,7 +1,8 @@
 """A worker: the process that runs the workflow and activity code.
 
 It asks the Temporal server for tasks on one task queue. It keeps no state of its own
-that matters: kill it, start another one, and the run goes on.
+that matters: kill it, start another one, and the run goes on. Several workers can poll
+the same queue; the server hands each task to one of them.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -15,14 +16,19 @@ from resumable_eval.workflow import EvalWorkflow
 
 
 def make_worker(
-    client: Client, task_queue: str, db_path: str, executor: ThreadPoolExecutor, exit_after_answer: int | None = None
+    client: Client,
+    task_queue: str,
+    db_path: str,
+    executor: ThreadPoolExecutor,
+    exit_after_answer: int | None = None,
+    workflow: type = EvalWorkflow,
 ) -> Worker:
     activities = Activities(db_path, exit_after_answer)
     return Worker(
         client,
         task_queue=task_queue,
-        workflows=[EvalWorkflow],
-        activities=[activities.ask_provider, activities.save_result],
+        workflows=[workflow],
+        activities=[activities.ask_provider, activities.ask_batch, activities.save_result],
         activity_executor=executor,  # the activities are plain functions, run in threads
         sticky_queue_schedule_to_start_timeout=timedelta(seconds=2),  # hand work to another worker sooner
     )
